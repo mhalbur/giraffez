@@ -350,8 +350,8 @@ PyObject* teradata_row_from_pytuple(const TeradataEncoder *e, PyObject *row, uns
         if (e->PackItemFunc(e, column, item, data, length) == NULL) {
             return NULL;
         }
+        Py_DECREF(item);
     }
-    Py_DECREF(item);
     Py_RETURN_NONE;
 }
 
