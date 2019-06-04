@@ -53,6 +53,7 @@ TeradataConnection* __teradata_new() {
     TeradataConnection *conn;
     conn = (TeradataConnection*)malloc(sizeof(TeradataConnection));
     conn->result = 0;
+    conn->rowcount = -1;
     conn->connected = NOT_CONNECTED;
     conn->request_status = REQUEST_CLOSED;
     conn->dbc = (dbcarea_t*)malloc(sizeof(dbcarea_t));
@@ -273,6 +274,17 @@ PyObject* teradata_execute(TeradataConnection *conn, TeradataEncoder *e, const c
     count = 0;
     // Find first statement info parcel only
     while (__teradata_fetch_record(conn) == OK && count < MAX_PARCEL_ATTEMPTS) {
+        // Watch for PclSUCCESS parcel and check rowcount (aka ActivityCount)
+        if (conn->dbc->fet_parcel_flavor == PclSUCCESS) {
+            uint8_t** data = (uint8_t**)&conn->dbc->fet_data_ptr;
+            uint32_t rowcount = (*data)[2] | (*data)[3] << 8 | (*data)[4] << 16 | (*data)[5] << 24;
+
+            conn->rowcount = rowcount;
+
+            // TODO: Do we want PclSUCCESS to increment count? 
+            //  MAX_PARCEL_ATTEMPTS looks to be set to 5 by default
+            continue;
+        }
         if ((row = teradata_handle_record(e, conn->dbc->fet_parcel_flavor,
                 (unsigned char**)&conn->dbc->fet_data_ptr,
                 conn->dbc->fet_ret_data_len)) == NULL) {
