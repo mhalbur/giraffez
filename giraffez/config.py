@@ -165,7 +165,7 @@ class Config(object):
     def encrypt(self, value, path):
         if path:
             key = path[-1].lower()
-            if key in ["pass", "password", "apikey", "key"] or path[0] in ["secure"]:
+            if key in ["pass", "password", "apikey", "key", "api_key"] or re.match('.*secret.*', key) is not None or path[0] in ["secure"]:
                 if not isinstance(value, basestring):
                     raise ConfigurationError("Cannot encrypt a value of type '{}'.".format(type(value)))
                 value = "ENCRYPTED:{}".format(ensure_str(self.cipher.encrypt(value)))
