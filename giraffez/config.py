@@ -18,6 +18,7 @@ import os
 import sys
 import base64
 
+import re
 import yaml
 
 from .errors import *
